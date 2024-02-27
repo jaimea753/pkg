@@ -1,0 +1,111 @@
+#!/bin/sh
+
+#echo "You must set a PKG_ROUTE, do it and remove this line" ; exit
+PKG_ROUTE=$PWD
+
+TAB="$(printf '\t')"
+
+init() {
+    cd "PKG_ROUTE"
+    mkdir bin lib man share src
+
+    cd src
+    git init
+
+    echo "Now you should change the path in yout profile: "
+    echo "  export PATH=\$PATH/"$PKG_ROUTE""
+}
+
+gen_makefile() {
+    cat > "$1" << EOF
+.DEFAULT_GOAL := build
+
+build:
+${TAB}make -C ${PROG_NAME}
+
+install:
+${TAB}make -C ${PROG_NAME} install
+
+clean:
+${TAB}make -C ${PROG_NAME} clean
+
+uninstall:
+${TAB}make -C ${PROG_NAME} uninstall
+
+update: clean
+${TAB}git submodule update --recursive --remote
+
+.PHONY: clean
+
+EOF
+}
+
+update() {
+    if [ "$1" = "all" ]
+    then
+        cd "$PKG_ROUTE"/src
+        for f in *
+        do
+            cd "$f" && make update && make install PREFIX="$PKG_ROUTE"
+            cd ..
+        done
+    else
+        SEL=$(ls "$PKG_ROUTE"/src | fzf)
+        cd "$PKG_ROUTE"/src/"$SEL"
+        make update
+        make install PREFIX="$PKG_ROUTE"
+    fi
+}
+
+add() {
+    while true
+    do
+       echo "Enter the program name: " 
+       read -r PROG_NAME
+       [ "$PROG_NAME" != "" ] && break
+    done
+    while true
+    do
+       echo "Enter the program url: " 
+       read -r URL
+       [ "$URL" != "" ] && break
+    done
+    
+    mkdir "$PKG_ROUTE"/src/"$PROG_NAME"
+    cd $PKG_ROUTE/src/"$PROG_NAME"
+    git submodule add "$URL"
+    gen_makefile Makefile
+    echo "Edit Makefile [y/n]: "
+    read SEL
+    [ "$SEL" = "y" ] && "$EDITOR" Makefile
+    make install PREFIX="$PKG_ROUTE"
+}
+
+full_remove() {
+    cd "$PKG_ROUTE"
+    rm -rf bin lib man share src
+}
+
+help() {
+    echo "pkg - git package manager"
+    echo "############################"
+    echo "pkg [command] :"
+    echo " pkg init - initializes the pkg directory"
+    echo " pkg full_remove - completely uninstalls pkg"
+    echo " pkg add - adds a package"
+    echo " pkg update - updates al package"
+    echo " pkg update all - updates all packages"
+}
+
+if [ "$1" = "init" ] ; then
+    init
+elif [ "$1" = "add" ] ; then
+    add
+elif [ "$1" = "update" ] ; then
+    update
+elif [ "$1" = "full_remove" ] ; then
+    full_remove
+else
+    help
+fi
+
