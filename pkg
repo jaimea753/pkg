@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#echo "You must set a PKG_ROUTE, do it and remove this line" ; exit
+echo "You must set a PKG_ROUTE, do it and remove this line" ; exit
 PKG_ROUTE=$PWD
 
 TAB="$(printf '\t')"
