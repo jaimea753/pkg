@@ -86,6 +86,15 @@ full_remove() {
     rm -rf bin lib man share src
 }
 
+clean() {
+    cd "$PKG_ROUTE"/src
+    for f in *
+    do
+        cd "$f" && make clean
+        cd ..
+    done       
+}
+
 help() {
     echo "pkg - git package manager"
     echo "############################"
@@ -101,6 +110,8 @@ if [ "$1" = "init" ] ; then
     init
 elif [ "$1" = "add" ] ; then
     add
+elif [ "$1" = "clean" ] ; then
+    clean
 elif [ "$1" = "update" ] ; then
     [ $# -eq 1 ] && update || update_all
 elif [ "$1" = "full_remove" ] ; then
