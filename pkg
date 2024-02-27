@@ -13,7 +13,7 @@ init() {
     git init
 
     echo "Now you should change the path in yout profile: "
-    echo "  export PATH=\$PATH/"$PKG_ROUTE""
+    echo "  export PATH=\$PATH/""$PKG_ROUTE"""
 }
 
 gen_makefile() {
@@ -41,21 +41,21 @@ EOF
 }
 
 update() {
-    if [ "$1" = "all" ]
-    then
-        cd "$PKG_ROUTE"/src
-        for f in *
-        do
-            cd "$f" && make update && make install PREFIX="$PKG_ROUTE"
-            cd ..
-        done
-    else
-        SEL=$(ls "$PKG_ROUTE"/src | fzf)
-        cd "$PKG_ROUTE"/src/"$SEL"
-        make update
-        make install PREFIX="$PKG_ROUTE"
-    fi
+    SEL=$(ls "$PKG_ROUTE"/src | fzf)
+    cd "$PKG_ROUTE"/src/"$SEL"
+    make update
+    make install PREFIX="$PKG_ROUTE"
 }
+
+update_all() {
+    cd "$PKG_ROUTE"/src
+    for f in *
+    do
+        cd "$f" && make update && make install PREFIX="$PKG_ROUTE"
+        cd ..
+    done       
+}
+ 
 
 add() {
     while true
@@ -72,11 +72,11 @@ add() {
     done
     
     mkdir "$PKG_ROUTE"/src/"$PROG_NAME"
-    cd $PKG_ROUTE/src/"$PROG_NAME"
+    cd "$PKG_ROUTE"/src/"$PROG_NAME"
     git submodule add "$URL"
     gen_makefile Makefile
     echo "Edit Makefile [y/n]: "
-    read SEL
+    read -r SEL
     [ "$SEL" = "y" ] && "$EDITOR" Makefile
     make install PREFIX="$PKG_ROUTE"
 }
@@ -102,7 +102,7 @@ if [ "$1" = "init" ] ; then
 elif [ "$1" = "add" ] ; then
     add
 elif [ "$1" = "update" ] ; then
-    update
+    [ $# -eq 1 ] && update || update_all
 elif [ "$1" = "full_remove" ] ; then
     full_remove
 else
